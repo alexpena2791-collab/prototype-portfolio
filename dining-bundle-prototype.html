@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Cruise — Dining Bundles</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1B3F6B;
+  --navy-d: #122B4A;
+  --navy-l: #2558A0;
+  --gold: #B8922A;
+  --gold-l: #D4A93E;
+  --gold-pale: #F7EDD3;
+  --cream: #F8F5F0;
+  --white: #FFFFFF;
+  --ink: #1A1A2A;
+  --mid: #556070;
+  --light: #8A97A8;
+  --rule: #DDE4EC;
+  --red: #B93030;
+  --green: #1E7048;
+  --green-l: #D6F0E2;
+  --amber: #C07A10;
+  --amber-l: #FEF3DC;
+  --amber-b: #F0C060;
+  --shadow-sm: 0 2px 8px rgba(27,63,107,0.08);
+  --shadow-md: 0 6px 24px rgba(27,63,107,0.12);
+  --shadow-lg: 0 16px 48px rgba(27,63,107,0.16);
+  --r: 10px;
+  --r-sm: 6px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);}
+
+.proto-strip{
+  background:var(--gold);color:var(--navy-d);
+  font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;
+  text-align:center;padding:6px;
+}
+
+.topnav{
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:60px;
+  border-bottom:2px solid rgba(184,146,42,.35);
+  position:sticky;top:0;z-index:100;
+}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#fff;letter-spacing:.04em;}
+.nav-logo span{color:var(--gold-l);}
+.nav-ship{display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(255,255,255,.65);}
+.nav-ship .sep{color:rgba(255,255,255,.25);}
+.nav-ship strong{color:rgba(255,255,255,.88);font-weight:500;}
+.nav-user{display:flex;align-items:center;gap:9px;font-size:13px;color:rgba(255,255,255,.75);cursor:pointer;}
+.nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--navy-d);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
+
+.progress-wrap{background:var(--white);border-bottom:1px solid var(--rule);padding:0 40px;}
+.progress-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;padding:14px 0;}
+.prog-step{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--light);white-space:nowrap;cursor:default;}
+.prog-step.active{color:var(--navy);}
+.prog-step.done{color:var(--gold);cursor:pointer;}
+.prog-step.done:hover{text-decoration:underline;}
+.prog-dot{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;flex-shrink:0;transition:all .25s;}
+.prog-step.active .prog-dot{background:var(--navy);border-color:var(--navy);color:#fff;}
+.prog-step.done .prog-dot{background:var(--gold);border-color:var(--gold);color:#fff;}
+.prog-line{flex:1;height:1px;background:var(--rule);margin:0 8px;}
+.prog-line.done{background:var(--gold);}
+
+.main{max-width:900px;margin:0 auto;padding:36px 40px 80px;}
+
+.screen{display:none;animation:fadeIn .3s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.screen-heading{margin-bottom:28px;}
+.screen-eyebrow{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.screen-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:var(--navy);line-height:1.2;margin-bottom:6px;}
+.screen-sub{font-size:14px;color:var(--mid);line-height:1.5;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 28px;border-radius:var(--r-sm);cursor:pointer;border:none;transition:all .2s;letter-spacing:.02em;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy-d);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.btn-primary:disabled{background:var(--light);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{background:transparent;color:var(--mid);border:1.5px solid var(--rule);}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy);}
+.btn-gold{background:var(--gold);color:#fff;}
+.btn-gold:hover{background:var(--gold-l);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+
+.back-row{display:flex;align-items:center;gap:8px;margin-bottom:24px;}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mid);cursor:pointer;padding:6px 0;border:none;background:none;transition:color .2s;}
+.back-btn:hover{color:var(--navy);}
+
+/* ── BUNDLE CARDS ── */
+.bundle-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px;}
+.bundle-card{background:var(--white);border-radius:var(--r);border:2px solid var(--rule);cursor:pointer;transition:all .25s;overflow:hidden;position:relative;}
+.bundle-card:hover{border-color:var(--navy-l);box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.bundle-card.selected{border-color:var(--navy);box-shadow:var(--shadow-md);}
+.bundle-card.selected .bundle-card-header{background:var(--navy);}
+.bundle-card.selected .bc-name{color:#fff;}
+.bundle-card.selected .bc-sub{color:rgba(255,255,255,.6);}
+.bundle-card-header{background:var(--navy-d);padding:22px 24px 20px;transition:background .25s;position:relative;overflow:hidden;}
+.bundle-card-header::after{content:'';position:absolute;bottom:-24px;right:-24px;width:80px;height:80px;border-radius:50%;border:16px solid rgba(184,146,42,.15);}
+.bc-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:#fff;margin-bottom:3px;}
+.bc-sub{font-size:12px;color:rgba(255,255,255,.5);}
+.bundle-card-body{padding:20px 24px 22px;}
+.bc-restaurants{list-style:none;margin-bottom:18px;}
+.bc-restaurants li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px;}
+.bc-restaurants li:last-child{border-bottom:none;}
+.bc-rest-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.icon-dinner{background:#EDF3FA;}
+.icon-lunch{background:#FEF6E7;}
+.bc-rest-name{font-weight:500;flex:1;}
+.bc-rest-type{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:10px;}
+.type-dinner{background:#EDF3FA;color:var(--navy-l);}
+.type-lunch{background:#FEF6E7;color:var(--gold);}
+.bc-pricing{background:var(--cream);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.bc-price-num{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--navy);}
+.bc-price-pp{font-size:12px;color:var(--mid);margin-left:3px;}
+.bc-savings{background:var(--gold-pale);border:1px solid rgba(184,146,42,.3);border-radius:var(--r-sm);padding:7px 12px;text-align:center;}
+.bc-save-label{font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;}
+.bc-save-amount{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--gold);display:block;}
+
+/* ── PARTICIPANTS ── */
+.participant-hint{background:var(--white);border:1px solid var(--rule);border-radius:var(--r-sm);padding:12px 16px;font-size:13px;color:var(--mid);margin-bottom:24px;display:flex;align-items:flex-start;gap:10px;}
+.guest-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
+.guest-card{background:var(--white);border:2px solid var(--rule);border-radius:var(--r);padding:18px 22px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;}
+.guest-card:hover{border-color:var(--navy-l);}
+.guest-card.checked{border-color:var(--navy);background:#F0F5FB;}
+.guest-card-avatar{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;flex-shrink:0;}
+.guest-card-info{flex:1;}
+.guest-card-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+.guest-card-cabin{font-size:12.5px;color:var(--mid);}
+.guest-card-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--rule);display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.guest-card.checked .guest-card-check{background:var(--navy);border-color:var(--navy);}
+.participant-summary{font-size:13px;color:var(--mid);padding:14px 16px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+
+/* ── TIME SLOTS ── */
+.restaurant-banner{background:var(--navy);border-radius:var(--r);padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.rb-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#fff;margin-bottom:2px;}
+.rb-desc{font-size:12.5px;color:rgba(255,255,255,.55);}
+.rb-badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);white-space:nowrap;}
+
+.ts-legend{display:flex;gap:18px;margin-bottom:14px;flex-wrap:wrap;}
+.ts-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid);}
+.ts-swatch{width:16px;height:16px;border-radius:3px;flex-shrink:0;}
+
+.ts-scroll{overflow-x:auto;margin-bottom:0;border-radius:var(--r);border:1px solid var(--rule);}
+.ts-table{width:100%;border-collapse:collapse;min-width:620px;background:var(--white);}
+.ts-table th{background:var(--navy-d);color:#fff;font-family:'DM Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:12px 10px;text-align:center;border-right:1px solid rgba(255,255,255,.1);}
+.ts-table th:first-child{text-align:left;padding-left:16px;min-width:80px;}
+.ts-table th .day-sub{font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0;font-weight:400;color:rgba(255,255,255,.5);text-transform:none;display:block;margin-top:2px;}
+.ts-table tr:hover td{background:#F8FBFF;}
+.ts-table td{border:1px solid var(--rule);padding:0;text-align:center;vertical-align:middle;}
+.ts-table td:first-child{background:var(--cream);font-family:'DM Mono',monospace;font-size:11px;color:var(--mid);font-weight:500;padding:0 8px 0 16px;text-align:left;border-right:2px solid var(--rule);white-space:nowrap;}
+
+.ts-cell{width:100%;height:48px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;border:2px solid transparent;position:relative;}
+.ts-cell.avail{color:var(--navy-l);cursor:pointer;}
+.ts-cell.avail:hover{background:#EDF3FA;border-color:var(--navy-l);}
+.ts-cell.sold{color:var(--rule);cursor:default;font-size:16px;background:#FAFAFA;}
+.ts-cell.selected{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600;cursor:pointer;}
+.ts-cell.selected:hover{background:var(--navy-d);}
+.ts-cell.bundle-conflict{background:#FFF0F0;color:var(--red);cursor:not-allowed;font-size:16px;}
+.ts-cell.ext-conflict{background:var(--amber-l);color:var(--amber);cursor:pointer;font-size:15px;position:relative;}
+.ts-cell.ext-conflict:hover{background:#FDEDC0;border-color:var(--amber-b);}
+.ts-cell.ext-conflict.selected{background:var(--amber);color:#fff;border-color:var(--amber);}
+
+/* conflict warning banner */
+.conflict-warning{
+  margin-top:12px;
+  background:var(--amber-l);
+  border:1.5px solid var(--amber-b);
+  border-radius:var(--r-sm);
+  padding:13px 16px;
+  display:flex;align-items:flex-start;gap:12px;
+  animation:fadeIn .2s ease;
+}
+.cw-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.cw-body{}
+.cw-title{font-size:13px;font-weight:600;color:var(--amber);margin-bottom:3px;}
+.cw-desc{font-size:12.5px;color:var(--mid);line-height:1.5;}
+.cw-dismiss{margin-top:8px;font-size:12px;color:var(--amber);cursor:pointer;font-weight:500;text-decoration:underline;background:none;border:none;padding:0;}
+
+.ts-note{font-size:12.5px;color:var(--mid);display:flex;align-items:center;gap:6px;margin-top:12px;margin-bottom:20px;}
+
+/* ── REVIEW ── */
+.review-bundle-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--navy-d);border-radius:var(--r) var(--r) 0 0;}
+.rbh-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#fff;}
+.rbh-sub{font-size:12px;color:rgba(255,255,255,.5);}
+.review-reservations{background:var(--white);border:1px solid var(--rule);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden;margin-bottom:24px;}
+.review-res-row{display:grid;grid-template-columns:1fr 1fr 1fr;padding:16px 20px;border-bottom:1px solid var(--rule);gap:16px;align-items:center;}
+.review-res-row:last-child{border-bottom:none;}
+.rr-rest{font-weight:500;font-size:14px;}
+.rr-type{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.rr-type.dinner{color:var(--navy-l);}
+.rr-type.lunch{color:var(--gold);}
+.rr-time{font-size:13.5px;color:var(--navy);font-weight:500;}
+.rr-date{font-size:12px;color:var(--mid);margin-top:1px;}
+.rr-check{display:flex;align-items:center;gap:6px;justify-content:flex-end;font-size:12.5px;color:var(--green);font-weight:500;}
+.review-guests{background:var(--white);border:1px solid var(--rule);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;}
+.rg-label{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--light);margin-bottom:10px;}
+.rg-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.rg-pill{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:20px;background:var(--cream);border:1px solid var(--rule);font-size:13px;}
+.rg-pill-av{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;flex-shrink:0;}
+.pricing-box{background:var(--white);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-bottom:28px;}
+.pb-title{background:var(--cream);padding:12px 20px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);border-bottom:1px solid var(--rule);}
+.pb-row{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;font-size:13.5px;}
+.pb-row.total{border-top:2px solid var(--rule);font-size:15px;font-weight:600;padding:14px 20px;background:var(--cream);}
+.pb-row.savings{color:var(--green);}
+.pb-label{color:var(--mid);}
+.pb-row.total .pb-label{color:var(--ink);}
+.pb-val{font-weight:500;color:var(--ink);}
+.pb-row.savings .pb-val{color:var(--green);font-weight:600;}
+.pb-row.total .pb-val{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--navy);}
+.pricing-note{font-size:12px;color:var(--light);margin-top:8px;margin-bottom:24px;font-style:italic;}
+.review-actions{display:flex;gap:12px;align-items:center;}
+
+/* ── LOADING ── */
+.loading-overlay{position:fixed;inset:0;background:rgba(27,63,107,.7);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s;}
+.loading-overlay.visible{opacity:1;pointer-events:auto;}
+.loading-card{background:#fff;border-radius:var(--r);padding:40px 48px;text-align:center;box-shadow:var(--shadow-lg);}
+.loading-spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--rule);border-top-color:var(--navy);animation:spin 1s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--navy);margin-bottom:4px;}
+.loading-sub{font-size:12.5px;color:var(--mid);}
+
+/* ── CONFIRM ── */
+.confirm-hero{text-align:center;padding:20px 0 32px;}
+.confirm-icon{width:72px;height:72px;border-radius:50%;background:var(--green-l);border:3px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;}
+.confirm-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:500;color:var(--navy);margin-bottom:6px;}
+.confirm-sub{font-size:14px;color:var(--mid);}
+.confirm-ref{display:inline-block;background:var(--gold-pale);border:1px solid rgba(184,146,42,.35);border-radius:var(--r-sm);padding:8px 20px;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--gold);letter-spacing:.12em;margin-top:12px;}
+.confirm-reservations{background:var(--white);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-bottom:24px;}
+.cr-header{background:var(--cream);padding:12px 20px;font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);border-bottom:1px solid var(--rule);}
+.cr-row{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--rule);}
+.cr-row:last-child{border-bottom:none;}
+.cr-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;flex-shrink:0;}
+.cr-info{flex:1;}
+.cr-rest{font-size:14px;font-weight:500;}
+.cr-detail{font-size:12.5px;color:var(--mid);margin-top:2px;}
+.confirm-actions{display:flex;gap:12px;justify-content:center;margin-top:28px;}
+.confirm-note{text-align:center;font-size:12px;color:var(--light);margin-top:16px;}
+</style>
+</head>
+<body>
+
+<div class="proto-strip">Interactive Prototype — My Cruise Post-Booking Platform · Dining Bundle Feature · v2</div>
+
+<nav class="topnav">
+  <div class="nav-logo">My<span>Cruise</span></div>
+  <div class="nav-ship">
+    <strong>Brilliance of the Seas</strong>
+    <span class="sep">·</span>
+    <span>7-Night Western Caribbean</span>
+    <span class="sep">·</span>
+    <span>Dep. Sat Mar 14, 2026</span>
+    <span class="sep">·</span>
+    <span>Ref: <strong>HF4892</strong></span>
+  </div>
+  <div class="nav-user">
+    <div class="nav-avatar">AM</div>
+    Alex Martinez
+  </div>
+</nav>
+
+<div class="progress-wrap">
+  <div class="progress-inner" id="progressBar"></div>
+</div>
+
+<div class="main">
+  <div class="screen active" id="screen-bundles"></div>
+  <div class="screen" id="screen-participants"></div>
+  <div class="screen" id="screen-timeslot"></div>
+  <div class="screen" id="screen-review"></div>
+  <div class="screen" id="screen-confirm"></div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Securing your reservations…</div>
+    <div class="loading-sub">Confirming availability with xManager</div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────
+const GUESTS = [
+  { id:0, name:'Alex Martinez',   initials:'AM', cabin:'Balcony 7214 · Lead Guest' },
+  { id:1, name:'Jordan Martinez', initials:'JM', cabin:'Balcony 7214' },
+];
+
+const DAYS = [
+  { label:'Day 2', date:'Sun Mar 15', sub:'At Sea'     },
+  { label:'Day 3', date:'Mon Mar 16', sub:'Cozumel'    },
+  { label:'Day 4', date:'Tue Mar 17', sub:'Costa Maya' },
+  { label:'Day 5', date:'Wed Mar 18', sub:'At Sea'     },
+  { label:'Day 6', date:'Thu Mar 19', sub:'Nassau'     },
+];
+
+const DINNER_TIMES = ['5:30 PM','6:00 PM','6:30 PM','7:00 PM','7:30 PM','8:00 PM','8:30 PM','9:00 PM'];
+const LUNCH_TIMES  = ['11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM'];
+
+// availability[timeIdx][dayIdx] — 1=open, 0=sold out
+const AVAIL = {
+  "Sabatini's Italian Trattoria": [
+    [1,0,1,1,1],[1,1,1,0,1],[0,1,1,1,1],[1,1,0,1,0],[1,1,1,1,1],[0,1,1,1,1],[1,0,1,0,1],[1,1,1,1,0]
+  ],
+  "The Crown Grill": [
+    [1,1,0,1,1],[0,1,1,1,0],[1,1,1,0,1],[1,0,1,1,1],[1,1,1,1,0],[1,1,0,1,1],[0,1,1,1,1],[1,1,1,0,1]
+  ],
+  "Izumi Hibachi & Sushi": [
+    [1,1,1,0,1],[1,0,1,1,1],[1,1,0,1,1],[0,1,1,1,1],[1,1,1,1,0],[1,0,1,0,1],[1,1,1,1,1],[0,1,0,1,1]
+  ],
+  "Giovanni's Table": [
+    [1,1,1,1,0],[1,1,0,1,1],[0,1,1,1,1],[1,1,1,0,1],[1,0,1,1,1],[1,1,1,1,0],[1,1,0,1,1],[0,1,1,1,1]
+  ],
+  "Chops Grille": [
+    [1,0,1,1,1],[1,1,1,0,1],[1,1,1,1,0],[0,1,0,1,1],[1,1,1,1,1],[1,1,0,1,0],[0,1,1,1,1],[1,0,1,0,1]
+  ],
+  "Portside BBQ (Lunch)": [
+    [1,1,0,1,1],[1,1,1,1,0],[0,1,1,1,1],[1,1,1,0,1],[1,0,1,1,1],[1,1,1,1,0]
+  ],
+};
+
+// ─── EXISTING CONFLICTS ────────────────────────────────────
+// External activities already booked by the guest.
+// Each entry: { mealType: 'dinner'|'lunch'|'both', dayIdx, timeIdxArr, label, time }
+// mealType determines which restaurant types this conflict appears on.
+const EXISTING_CONFLICTS = [
+  // Cozumel excursion: runs 8am–1pm on Day 3 (dayIdx 1)
+  // Overlaps with lunch slots 0,1,2 (11:30am, 12pm, 12:30pm)
+  {
+    mealType: 'lunch',
+    dayIdx: 1,
+    timeIdxArr: [0, 1, 2],
+    label: 'Cozumel Snorkel & Beach Excursion',
+    time: '8:00 AM – 1:00 PM',
+    icon: '🤿',
+  },
+  // Spa on Day 6 (dayIdx 4, Nassau) at 7:30 PM (dinner timeIdx 4)
+  {
+    mealType: 'dinner',
+    dayIdx: 4,
+    timeIdxArr: [4],
+    label: 'Spa: Deep Tissue Massage',
+    time: '7:30 PM',
+    icon: '💆',
+  },
+  // Pre-existing individual dining reservation Day 2 (dayIdx 0, At Sea) at 8:00 PM (dinner timeIdx 5)
+  {
+    mealType: 'dinner',
+    dayIdx: 0,
+    timeIdxArr: [5],
+    label: "Giovanni's Table — Individual Dining Reservation",
+    time: '8:00 PM',
+    icon: '🍽️',
+  },
+];
+
+// Build a fast-lookup map: "mealType-dayIdx-timeIdx" → conflict object
+function buildConflictMap(mealType) {
+  const map = {};
+  for (const c of EXISTING_CONFLICTS) {
+    if (c.mealType === mealType) {
+      for (const ti of c.timeIdxArr) {
+        map[`${c.dayIdx}-${ti}`] = c;
+      }
+    }
+  }
+  return map;
+}
+
+const BUNDLES = [
+  {
+    id:0,
+    name:"Signature Dining Collection",
+    subtitle:"Three curated dinners at sea",
+    price:119, saves:37, individualPrice:156, discount:"24%",
+    restaurants:[
+      { name:"Sabatini's Italian Trattoria", type:"dinner", price:45, desc:"Handmade pasta & classic Italian" },
+      { name:"The Crown Grill",              type:"dinner", price:58, desc:"Prime-aged steaks & fresh seafood" },
+      { name:"Izumi Hibachi & Sushi",        type:"dinner", price:53, desc:"Teppanyaki & premium sushi" },
+    ]
+  },
+  {
+    id:1,
+    name:"Flavours of the Sea",
+    subtitle:"Two dinners and a signature lunch",
+    price:89, saves:28, individualPrice:117, discount:"24%",
+    restaurants:[
+      { name:"Giovanni's Table",      type:"dinner", price:48, desc:"Rustic Italian, family-style sharing" },
+      { name:"Chops Grille",          type:"dinner", price:45, desc:"American steakhouse with classic sides" },
+      { name:"Portside BBQ (Lunch)",  type:"lunch",  price:24, desc:"Slow-smoked BBQ with ocean views" },
+    ]
+  }
+];
+
+// ─── STATE ─────────────────────────────────────────────────
+const S = {
+  screen: 'bundles',
+  bundle: null,
+  participants: [0],
+  slots: [null, null, null],
+  currentRest: 0,
+  activeConflict: null, // conflict object currently shown in warning banner
+};
+
+const SCREEN_ORDER = ['bundles','participants','timeslot','review','confirm'];
+const STEPS = [
+  { id:'bundles',      label:'Select Bundle' },
+  { id:'participants', label:'Choose Guests' },
+  { id:'timeslot',     label:'Pick Times'    },
+  { id:'review',       label:'Review'        },
+  { id:'confirm',      label:'Confirm'       },
+];
+
+// ─── NAVIGATION ────────────────────────────────────────────
+function goTo(id) {
+  document.getElementById('screen-'+S.screen).classList.remove('active');
+  S.screen = id;
+  S.activeConflict = null;
+  const scr = document.getElementById('screen-'+id);
+  scr.innerHTML = '';
+  renderScreen(id);
+  scr.classList.add('active');
+  renderProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goBack() {
+  if (S.screen==='timeslot') {
+    if (S.currentRest > 0) { S.currentRest--; goTo('timeslot'); }
+    else goTo('participants');
+  } else {
+    const idx = SCREEN_ORDER.indexOf(S.screen);
+    if (idx > 0) goTo(SCREEN_ORDER[idx-1]);
+  }
+}
+
+function renderProgress() {
+  const bar = document.getElementById('progressBar');
+  const ai  = STEPS.findIndex(s => s.id === S.screen);
+  bar.innerHTML = STEPS.map((step, i) => {
+    const isDone   = i < ai;
+    const isActive = i === ai;
+    const cls = isDone ? 'done' : isActive ? 'active' : '';
+    const lineCls  = i < ai ? 'done' : '';
+    const dot = isDone ? '✓' : String(i+1);
+    const clickFn  = isDone ? `onclick="navBackTo('${step.id}')"` : '';
+    let label = step.label;
+    if (step.id==='timeslot' && isActive) {
+      const n = S.bundle!==null ? BUNDLES[S.bundle].restaurants.length : 3;
+      label += ` (${S.currentRest+1} of ${n})`;
+    }
+    const line = i < STEPS.length-1 ? `<div class="prog-line ${lineCls}"></div>` : '';
+    return `<div class="prog-step ${cls}" ${clickFn}><div class="prog-dot">${dot}</div><span>${label}</span></div>${line}`;
+  }).join('');
+}
+
+function navBackTo(id) {
+  const order = ['bundles','participants','timeslot','review'];
+  const t = order.indexOf(id), c = order.indexOf(S.screen);
+  if (t < c) { if(id==='timeslot') S.currentRest=0; goTo(id); }
+}
+
+// ─── SCREEN DISPATCH ───────────────────────────────────────
+function renderScreen(id) {
+  const el = document.getElementById('screen-'+id);
+  ({ bundles:renderBundles, participants:renderParticipants,
+     timeslot:renderTimeslot, review:renderReview, confirm:renderConfirm })[id](el);
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN 1 — Bundle selection
+// ─────────────────────────────────────────────────────────
+function renderBundles(el) {
+  el.innerHTML = `
+    <div class="screen-heading">
+      <div class="screen-eyebrow">Specialty Dining · Dining Bundles</div>
+      <div class="screen-title">Choose your dining collection</div>
+      <div class="screen-sub">Book multiple restaurants together and save up to 24% versus individual prices. Your time slots are reserved when you complete the bundle purchase.</div>
+    </div>
+    <div class="bundle-grid">
+      ${BUNDLES.map(b => `
+        <div class="bundle-card ${S.bundle===b.id?'selected':''}" onclick="selectBundle(${b.id})">
+          <div class="bundle-card-header">
+            <div class="bc-name">${b.name}</div>
+            <div class="bc-sub">${b.subtitle}</div>
+          </div>
+          <div class="bundle-card-body">
+            <ul class="bc-restaurants">
+              ${b.restaurants.map(r=>`
+                <li>
+                  <div class="bc-rest-icon ${r.type==='lunch'?'icon-lunch':'icon-dinner'}">${r.type==='lunch'?'☀️':'🍽️'}</div>
+                  <div><div class="bc-rest-name">${r.name}</div><div style="font-size:11.5px;color:var(--light);">${r.desc}</div></div>
+                  <span class="bc-rest-type ${r.type}">${r.type}</span>
+                </li>
+              `).join('')}
+            </ul>
+            <div class="bc-pricing">
+              <div>
+                <span class="bc-price-num">$${b.price}</span><span class="bc-price-pp">/ person</span>
+                <div style="font-size:11.5px;color:var(--light);margin-top:2px;">Individual value: $${b.individualPrice}/person</div>
+              </div>
+              <div class="bc-savings">
+                <div class="bc-save-label">You save</div>
+                <span class="bc-save-amount">$${b.saves}</span>
+                <div style="font-size:10px;color:var(--gold);">${b.discount} off</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;align-items:center;">
+      <span style="font-size:13px;color:var(--mid);" id="bundleHint">${S.bundle!==null?BUNDLES[S.bundle].name+' selected':'Select a bundle above to continue'}</span>
+      <button class="btn btn-primary" id="bundleContinue" onclick="continueFromBundles()" ${S.bundle===null?'disabled':''}>Continue &rarr;</button>
+    </div>`;
+}
+
+function selectBundle(id) {
+  S.bundle = id; S.slots = [null,null,null];
+  document.querySelectorAll('.bundle-card').forEach((c,i)=>c.classList.toggle('selected',i===id));
+  document.getElementById('bundleContinue').disabled = false;
+  document.getElementById('bundleHint').textContent = BUNDLES[id].name+' selected';
+}
+
+function continueFromBundles() {
+  if (S.bundle===null) return;
+  goTo('participants');
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN 2 — Participants
+// ─────────────────────────────────────────────────────────
+function renderParticipants(el) {
+  const b = BUNDLES[S.bundle];
+  el.innerHTML = `
+    <div class="back-row"><button class="back-btn" onclick="goBack()">← Back</button></div>
+    <div class="screen-heading">
+      <div class="screen-eyebrow">${b.name}</div>
+      <div class="screen-title">Who's joining you?</div>
+      <div class="screen-sub">Select the guests who will be dining on this bundle. You'll see time slot availability for the number of guests chosen.</div>
+    </div>
+    <div class="participant-hint">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="var(--navy-l)"/><path d="M8 7v4M8 5h.01" stroke="var(--navy-l)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Pricing is per person. Each participant will have a reservation at all ${b.restaurants.length} included restaurants.</span>
+    </div>
+    <div class="guest-cards">
+      ${GUESTS.map(g=>`
+        <div class="guest-card ${S.participants.includes(g.id)?'checked':''}" onclick="toggleGuest(${g.id})">
+          <div class="guest-card-avatar">${g.initials}</div>
+          <div class="guest-card-info">
+            <div class="guest-card-name">${g.name}</div>
+            <div class="guest-card-cabin">${g.cabin}</div>
+          </div>
+          <div class="guest-card-check">
+            ${S.participants.includes(g.id)?'<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="participant-summary">
+      <span>${ptSummary()}</span>
+      <span style="font-weight:600;color:var(--navy);">${ptPrice()}</span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="continueFromParticipants()" ${S.participants.length===0?'disabled':''}>Select Time Slots &rarr;</button>
+    </div>`;
+}
+
+function ptSummary() {
+  const n=S.participants.length, b=BUNDLES[S.bundle];
+  if(!n) return 'No guests selected';
+  return S.participants.map(id=>GUESTS[id].name.split(' ')[0]).join(' & ')+' · '+b.restaurants.length+' restaurants · '+n+' guest'+(n>1?'s':'');
+}
+function ptPrice() {
+  const n=S.participants.length, b=BUNDLES[S.bundle];
+  return n===0 ? '$0.00' : `$${(b.price*n).toFixed(2)} total`;
+}
+
+function toggleGuest(id) {
+  if (S.participants.includes(id)) {
+    if (S.participants.length===1) return;
+    S.participants = S.participants.filter(x=>x!==id);
+  } else { S.participants.push(id); }
+  renderParticipants(document.getElementById('screen-participants'));
+}
+
+function continueFromParticipants() {
+  if (!S.participants.length) return;
+  S.currentRest = 0; goTo('timeslot');
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN 3 — Time Slot Picker
+// ─────────────────────────────────────────────────────────
+function renderTimeslot(el) {
+  const b    = BUNDLES[S.bundle];
+  const rest = b.restaurants[S.currentRest];
+  const times = rest.type==='lunch' ? LUNCH_TIMES : DINNER_TIMES;
+  const avail = AVAIL[rest.name];
+  const sel   = S.slots[S.currentRest];
+  const n     = S.participants.length;
+
+  // Build external conflict map for this meal type
+  const extMap = buildConflictMap(rest.type);
+
+  // Build intra-bundle hard-block set: slots already picked for OTHER restaurants in this bundle
+  const bundleBlocked = new Set();
+  S.slots.forEach((slot, ri) => {
+    if (ri !== S.currentRest && slot !== null) {
+      bundleBlocked.add(`${slot.dayIdx}-${slot.timeIdx}`);
+    }
+  });
+
+  // Determine if the currently selected slot has a conflict (for banner persistence)
+  let activeCW = S.activeConflict;
+
+  el.innerHTML = `
+    <div class="back-row"><button class="back-btn" onclick="goBack()">← Back</button></div>
+    <div class="screen-heading">
+      <div class="screen-eyebrow">Restaurant ${S.currentRest+1} of ${b.restaurants.length}</div>
+      <div class="screen-title">Select a ${rest.type} time</div>
+      <div class="screen-sub">Choose a date and time for this restaurant. Only slots available for your party of ${n} are shown.</div>
+    </div>
+
+    <div class="restaurant-banner">
+      <div>
+        <div class="rb-name">${rest.name}</div>
+        <div class="rb-desc">${rest.desc}</div>
+      </div>
+      <div class="rb-badge">${rest.type==='lunch'?'☀️ Lunch':'🍽️ Dinner'} · $${rest.price}/person</div>
+    </div>
+
+    <div class="ts-legend">
+      <div class="ts-legend-item">
+        <div class="ts-swatch" style="background:#EDF3FA;border:1.5px solid var(--navy-l);"></div>Available
+      </div>
+      <div class="ts-legend-item">
+        <div class="ts-swatch" style="background:var(--navy);"></div>Your selection
+      </div>
+      <div class="ts-legend-item">
+        <div class="ts-swatch" style="background:#FAFAFA;border:1px solid var(--rule);"></div>Sold out
+      </div>
+      <div class="ts-legend-item">
+        <div class="ts-swatch" style="background:var(--amber-l);border:1.5px solid var(--amber-b);"></div>⚠️ Conflicts with existing activity
+      </div>
+      <div class="ts-legend-item">
+        <div class="ts-swatch" style="background:#FFF0F0;border:1.5px solid #FFAAAA;"></div>🚫 Reserved for another bundle restaurant
+      </div>
+    </div>
+
+    <div class="ts-scroll">
+      <table class="ts-table">
+        <thead>
+          <tr>
+            <th></th>
+            ${DAYS.map(d=>`<th>${d.label}<span class="day-sub">${d.sub}<br><span style="font-weight:300;opacity:.7;">${d.date}</span></span></th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${times.map((t,ti) => `
+            <tr>
+              <td>${t}</td>
+              ${DAYS.map((d,di) => {
+                const key    = `${di}-${ti}`;
+                const isAvail = avail[ti]?.[di];
+                const isSel   = sel && sel.dayIdx===di && sel.timeIdx===ti;
+                const isBundleBlock = bundleBlocked.has(key);
+                const extConf = extMap[key];
+
+                let cls, content, onclick='', title='';
+
+                if (isBundleBlock) {
+                  cls='bundle-conflict'; content='🚫'; title='Reserved for another restaurant in this bundle';
+                } else if (!isAvail) {
+                  cls='sold'; content='—';
+                } else if (isSel) {
+                  // selected — may also be a conflict slot
+                  cls = extConf ? 'ts-cell selected ext-conflict' : 'ts-cell selected';
+                  content='✓';
+                  onclick=`onclick="selectSlot(${di},${ti})"`;
+                } else if (extConf) {
+                  cls='ext-conflict'; content='⚠️';
+                  onclick=`onclick="selectSlotWithConflict(${di},${ti},${EXISTING_CONFLICTS.indexOf(extConf)})"`;
+                  title=extConf.label;
+                } else {
+                  cls='avail'; content='';
+                  onclick=`onclick="selectSlot(${di},${ti})"`;
+                }
+                return `<td><div class="ts-cell ${cls}" ${onclick} title="${title}">${content}</div></td>`;
+              }).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div id="conflictWarning">${activeCW ? renderConflictBanner(activeCW) : ''}</div>
+
+    <div class="ts-note">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6.5" stroke="var(--light)"/><path d="M7 6v3.5M7 4.5h.01" stroke="var(--light)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Showing availability for <strong>${n} guest${n>1?'s':''}</strong> · Slots are held for your party once you add to cart
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" id="slotContinue" onclick="continueFromTimeslot()" ${!sel?'disabled':''}>
+        ${S.currentRest < b.restaurants.length-1 ? 'Next Restaurant →' : 'Review Selections →'}
+      </button>
+    </div>`;
+}
+
+function renderConflictBanner(conflict) {
+  return `
+    <div class="conflict-warning">
+      <div class="cw-icon">${conflict.icon}</div>
+      <div class="cw-body">
+        <div class="cw-title">⚠️ Heads up — this time overlaps with an existing reservation</div>
+        <div class="cw-desc">
+          You have <strong>${conflict.label}</strong> booked at <strong>${conflict.time}</strong> on this day.
+          You can still select this time slot, but you may not be able to attend both.
+        </div>
+        <button class="cw-dismiss" onclick="dismissConflict()">Dismiss</button>
+      </div>
+    </div>`;
+}
+
+function selectSlot(dayIdx, timeIdx) {
+  S.slots[S.currentRest] = { dayIdx, timeIdx };
+  S.activeConflict = null;
+  renderTimeslot(document.getElementById('screen-timeslot'));
+}
+
+function selectSlotWithConflict(dayIdx, timeIdx, conflictIdx) {
+  S.slots[S.currentRest] = { dayIdx, timeIdx };
+  S.activeConflict = EXISTING_CONFLICTS[conflictIdx];
+  renderTimeslot(document.getElementById('screen-timeslot'));
+}
+
+function dismissConflict() {
+  S.activeConflict = null;
+  const el = document.getElementById('conflictWarning');
+  if (el) el.innerHTML = '';
+}
+
+function continueFromTimeslot() {
+  if (!S.slots[S.currentRest]) return;
+  const b = BUNDLES[S.bundle];
+  if (S.currentRest < b.restaurants.length-1) { S.currentRest++; goTo('timeslot'); }
+  else goTo('review');
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN 4 — Review
+// ─────────────────────────────────────────────────────────
+function renderReview(el) {
+  const b = BUNDLES[S.bundle];
+  const n = S.participants.length;
+  const names = S.participants.map(id=>GUESTS[id].name.split(' ')[0]).join(' & ');
+
+  // Check if any selected slot has an external conflict — show advisory if so
+  const extMap = {}; // aggregate all conflicts
+  for (const c of EXISTING_CONFLICTS) {
+    for (const ti of c.timeIdxArr) extMap[`${c.mealType}-${c.dayIdx}-${ti}`] = c;
+  }
+  const conflictedSlots = b.restaurants.map((r,i) => {
+    const slot = S.slots[i];
+    if (!slot) return null;
+    return extMap[`${r.type}-${slot.dayIdx}-${slot.timeIdx}`] || null;
+  }).filter(Boolean);
+
+  el.innerHTML = `
+    <div class="back-row"><button class="back-btn" onclick="goBack()">← Back</button></div>
+    <div class="screen-heading">
+      <div class="screen-eyebrow">Almost there</div>
+      <div class="screen-title">Review your reservations</div>
+      <div class="screen-sub">Confirm your selections below. Once you add to cart, your time slots will be held.</div>
+    </div>
+
+    ${conflictedSlots.length ? `
+    <div style="background:#FEF3DC;border:1.5px solid var(--amber-b);border-radius:var(--r-sm);padding:13px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:16px;flex-shrink:0;">⚠️</span>
+      <div style="font-size:13px;color:var(--amber);">
+        <strong>Reminder:</strong> ${conflictedSlots.length} of your selected time${conflictedSlots.length>1?'s overlap':'overlaps'} with existing reservations —
+        ${conflictedSlots.map(c=>`<em>${c.label}</em>`).join(', ')}.
+        You can still proceed, but you may want to review your schedule.
+        <span style="text-decoration:underline;cursor:pointer;margin-left:6px;" onclick="S.currentRest=0;goTo('timeslot')">Edit times</span>
+      </div>
+    </div>` : ''}
+
+    <div style="margin-bottom:24px;">
+      <div class="review-bundle-header">
+        <div><div class="rbh-title">${b.name}</div><div class="rbh-sub">${b.restaurants.length} reservations · ${names} · ${n} guest${n>1?'s':''}</div></div>
+        <button class="btn btn-ghost" onclick="S.currentRest=0;goTo('timeslot')" style="font-size:12px;padding:8px 14px;color:#fff;border-color:rgba(255,255,255,.25);">Edit Times</button>
+      </div>
+      <div class="review-reservations">
+        ${b.restaurants.map((r,i) => {
+          const slot = S.slots[i];
+          const times = r.type==='lunch' ? LUNCH_TIMES : DINNER_TIMES;
+          const day = DAYS[slot.dayIdx];
+          const time = times[slot.timeIdx];
+          const hasConflict = extMap[`${r.type}-${slot.dayIdx}-${slot.timeIdx}`];
+          return `
+            <div class="review-res-row">
+              <div>
+                <div class="rr-rest">${r.name}</div>
+                <div class="rr-type ${r.type}">${r.type}</div>
+              </div>
+              <div>
+                <div class="rr-time">${time} ${hasConflict?'<span style="font-size:12px;" title="'+hasConflict.label+'">⚠️</span>':''}</div>
+                <div class="rr-date">${day.date} · ${day.sub}</div>
+              </div>
+              <div class="rr-check">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="var(--green)"/><path d="M5 8l2 2 4-4" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Confirmed
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="review-guests">
+      <div class="rg-label">Dining guests</div>
+      <div class="rg-pills">
+        ${S.participants.map(id=>{const g=GUESTS[id];return`<div class="rg-pill"><div class="rg-pill-av">${g.initials}</div>${g.name}</div>`;}).join('')}
+      </div>
+    </div>
+
+    <div class="pricing-box">
+      <div class="pb-title">Price breakdown</div>
+      <div>
+        <div class="pb-row"><span class="pb-label">${b.name}</span><span class="pb-val">$${b.price} × ${n} guest${n>1?'s':''}</span></div>
+        <div class="pb-row savings"><span class="pb-label">Savings vs. individual prices</span><span class="pb-val">− $${(b.saves*n).toFixed(2)}</span></div>
+        <div class="pb-row"><span class="pb-label" style="color:var(--light);font-size:12px;">Individual price would be: $${(b.individualPrice*n).toFixed(2)}</span><span></span></div>
+        <div class="pb-row total"><span class="pb-label">Total due at checkout</span><span class="pb-val">$${(b.price*n).toFixed(2)}</span></div>
+      </div>
+    </div>
+    <div class="pricing-note">* Complimentary dining credits (e.g., Have It All) are not applicable to bundle purchases.</div>
+
+    <div class="review-actions">
+      <button class="btn btn-ghost" onclick="goBack()">← Edit</button>
+      <button class="btn btn-gold" onclick="confirmPurchase()" style="flex:1;max-width:320px;">🔒 Add to Cart & Confirm — $${(b.price*n).toFixed(2)}</button>
+    </div>`;
+}
+
+function confirmPurchase() {
+  const ov = document.getElementById('loadingOverlay');
+  ov.classList.add('visible');
+  setTimeout(() => { ov.classList.remove('visible'); goTo('confirm'); }, 2200);
+}
+
+// ─────────────────────────────────────────────────────────
+// SCREEN 5 — Confirmation
+// ─────────────────────────────────────────────────────────
+function renderConfirm(el) {
+  const b = BUNDLES[S.bundle];
+  const n = S.participants.length;
+  el.innerHTML = `
+    <div class="confirm-hero">
+      <div class="confirm-icon">✓</div>
+      <div class="confirm-title">You're all set!</div>
+      <div class="confirm-sub">Your dining bundle has been confirmed and your reservations are secured.</div>
+      <div class="confirm-ref">Reservation Ref: DIN-${Math.floor(Math.random()*90000+10000)}</div>
+    </div>
+    <div class="confirm-reservations">
+      <div class="cr-header">Your confirmed reservations · Brilliance of the Seas · Mar 2026</div>
+      ${b.restaurants.map((r,i) => {
+        const slot  = S.slots[i];
+        const times = r.type==='lunch' ? LUNCH_TIMES : DINNER_TIMES;
+        const day   = DAYS[slot.dayIdx];
+        const time  = times[slot.timeIdx];
+        return `
+          <div class="cr-row">
+            <div class="cr-num">${i+1}</div>
+            <div class="cr-info">
+              <div class="cr-rest">${r.name}</div>
+              <div class="cr-detail">${time} · ${day.date} · ${day.sub} · Party of ${n}</div>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:10px;background:${r.type==='lunch'?'#FEF6E7':'#EDF3FA'};color:${r.type==='lunch'?'var(--gold)':'var(--navy-l)'};">${r.type}</span>
+          </div>`;
+      }).join('')}
+    </div>
+    <div style="background:var(--white);border:1px solid var(--rule);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--light);margin-bottom:4px;">Total Charged</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--navy);">$${(b.price*n).toFixed(2)}</div>
+        <div style="font-size:12px;color:var(--green);margin-top:2px;">You saved $${(b.saves*n).toFixed(2)} vs. individual prices</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;color:var(--mid);margin-bottom:4px;">Dining guests</div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          ${S.participants.map(id=>`<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;">${GUESTS[id].initials}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--gold-pale);border:1px solid rgba(184,146,42,.3);border-radius:var(--r);padding:14px 20px;margin-bottom:24px;font-size:13px;color:var(--gold);display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:16px;flex-shrink:0;">ℹ️</span>
+      <span>You can modify reservation times anytime before <strong>Wed Mar 11, 2026</strong> (3 days before departure) via My Cruise. Contact Guest Services onboard after that date.</span>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="resetFlow()">Add Another Bundle</button>
+      <button class="btn btn-primary" onclick="resetFlow()" style="min-width:200px;">Return to My Cruise</button>
+    </div>
+    <div class="confirm-note">A confirmation email has been sent to the address on file for booking HF4892</div>`;
+}
+
+function resetFlow() {
+  S.bundle=null; S.participants=[0]; S.slots=[null,null,null]; S.currentRest=0; S.activeConflict=null;
+  goTo('bundles');
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+renderProgress();
+renderScreen('bundles');
+</script>
+</body>
+</html>
