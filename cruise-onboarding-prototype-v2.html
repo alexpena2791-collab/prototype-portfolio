@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cruise Onboarding Prototype v2 — HAL Style</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Source Sans 3', 'Segoe UI', sans-serif; background: #F0EEE9; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c0b9ae; border-radius: 3px; }
+    button { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ─── Design Tokens ───────────────────────────────────────────────────────────
+    const C = {
+      navy:       "#1B2B5C",
+      navyDark:   "#101D40",
+      navyLight:  "#253570",
+      orange:     "#D4621A",
+      orangeHover:"#BE5517",
+      orangeLight:"#FDF0E8",
+      gold:       "#B8902A",
+      white:      "#FFFFFF",
+      offWhite:   "#F8F6F2",
+      bgPage:     "#F0EEE9",
+      bgCard:     "#FFFFFF",
+      border:     "#DDD9D0",
+      textDark:   "#1A1A1A",
+      textMid:    "#4A4A4A",
+      textLight:  "#767676",
+      green:      "#2E7D32",
+      greenLight: "#EDF7EE",
+    };
+
+    // ─── Mock Data ───────────────────────────────────────────────────────────────
+    const guest = {
+      name: "Alex",
+      isReturning: true,
+      ship: "Nieuw Amsterdam",
+      destination: "Eastern Caribbean",
+      departurePort: "Fort Lauderdale, FL",
+      sailDate: "April 10, 2026",
+      daysUntil: 45,
+      cabinType: "Verandah Suite",
+      bookingRef: "HA-2847391",
+      partyType: "Couple",
+      pastPurchases: ["Specialty Dining", "Spa"],
+      package: "Have It All",
+    };
+
+    const hiaInclusions = [
+      { emoji: "🤿", label: "Shore Excursion Credit", detail: "$100 per person, per port" },
+      { emoji: "🍹", label: "Premium Beverage Package", detail: "Cocktails, wine, beer & more" },
+      { emoji: "📶", label: "Surf & Stream Wi-Fi", detail: "Stay connected throughout your voyage" },
+      { emoji: "🍽️", label: "Specialty Dining", detail: "1 dinner per guest, per day" },
+    ];
+
+    const itinerary = [
+      { day: 1,  date: "Apr 10", port: "Fort Lauderdale, FL",         type: "embark",  emoji: "⚓", desc: "Embarkation — your adventure begins",        excursions: 0 },
+      { day: 2,  date: "Apr 11", port: "At Sea",                       type: "sea",     emoji: "🌊", desc: "Enjoy the ship — pools, spa & dining",        excursions: 0 },
+      { day: 3,  date: "Apr 12", port: "Half Moon Cay, Bahamas",       type: "port",    emoji: "🏝️", desc: "HAL's private island — white sand beaches",   excursions: 14 },
+      { day: 4,  date: "Apr 13", port: "Grand Turk, Turks & Caicos",   type: "port",    emoji: "🦞", desc: "Pristine reefs & a laid-back island vibe",     excursions: 11 },
+      { day: 5,  date: "Apr 14", port: "Amber Cove, Dominican Republic",type: "port",   emoji: "🌴", desc: "Lush rainforests, waterfalls & local culture",  excursions: 18 },
+      { day: 6,  date: "Apr 15", port: "At Sea",                       type: "sea",     emoji: "🌊", desc: "Relax before your final morning at home",      excursions: 0 },
+      { day: 7,  date: "Apr 16", port: "Fort Lauderdale, FL",          type: "debark",  emoji: "🏠", desc: "Debarkation — until next time",               excursions: 0 },
+    ];
+
+    const availableNow = [
+      { id: 1, category: "Shore Excursions", title: "Snorkeling at Half Moon Cay", reason: "Top pick for couples — use your HIA credit", price: "$89", unit: "/ person", emoji: "🤿", tag: "HIA Credit Applies", tagColor: C.green },
+      { id: 2, category: "Shore Excursions", title: "Grand Turk: Reef & Rum Tour", reason: "Most booked excursion on this itinerary", price: "$119", unit: "/ person", emoji: "🦞", tag: "Best Seller", tagColor: C.navy },
+      { id: 3, category: "Shore Excursions", title: "Amber Cove: Zipline Adventure", reason: "Popular with couples — HIA credit applies", price: "$99", unit: "/ person", emoji: "🌴", tag: "HIA Credit Applies", tagColor: C.green },
+      { id: 4, category: "Extras", title: "Unlimited Photo Package", reason: "Capture every port & onboard moment", price: "$249", unit: "/ cabin", emoji: "📸", tag: "Popular", tagColor: C.gold },
+    ];
+
+    const comingSoon = [
+      { category: "Specialty Dining Reservations", emoji: "🍽️", opensIn: "15 days", description: "Pinnacle Grill, Canaletto & more — your HIA includes 1 dinner per day" },
+      { category: "Spa & Wellness", emoji: "💆",  opensIn: "15 days", description: "Treatments, thermal suite, salon & fitness" },
+      { category: "Beverage Upgrades",            emoji: "🍷", opensIn: "5 days",  description: "Upgrade or add packages beyond your HIA" },
+    ];
+
+    const navTabs = ["My Cruise", "Itinerary", "Shore Excursions", "Spa & Wellness", "Food & Beverage", "Packages", "Extras"];
+
+    // ─── Shared UI ───────────────────────────────────────────────────────────────
+    function OrangeButton({ onClick, children, style = {} }) {
+      const [hov, setHov] = useState(false);
+      return (
+        <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+          style={{ background: hov ? C.orangeHover : C.orange, color: C.white, border: "none", borderRadius: 2, padding: "11px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", letterSpacing: 0.3, transition: "background 0.15s", ...style }}>
+          {children}
+        </button>
+      );
+    }
+
+    function GhostButton({ onClick, children, style = {} }) {
+      const [hov, setHov] = useState(false);
+      return (
+        <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+          style={{ background: "transparent", color: hov ? C.orangeHover : C.orange, border: `1.5px solid ${hov ? C.orangeHover : C.orange}`, borderRadius: 2, padding: "10px 22px", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", ...style }}>
+          {children}
+        </button>
+      );
+    }
+
+    function StepDots({ current, total }) {
+      return (
+        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+          {Array.from({ length: total }).map((_, i) => (
+            <div key={i} style={{ width: i + 1 === current ? 24 : 8, height: 8, borderRadius: 4, background: i + 1 === current ? C.orange : "rgba(255,255,255,0.3)", transition: "width 0.3s ease" }} />
+          ))}
+        </div>
+      );
+    }
+
+    // ─── Modal Header (shared) ────────────────────────────────────────────────────
+    function ModalHeader({ eyebrow, title, subtitle, step }) {
+      return (
+        <div style={{ background: `linear-gradient(175deg, ${C.navyDark} 0%, ${C.navy} 100%)`, padding: "28px 40px 24px", color: C.white }}>
+          <div style={{ fontSize: 11, color: C.orange, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>◆ HOLLAND AMERICA LINE</div>
+          {eyebrow && <div style={{ fontSize: 11, opacity: 0.6, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{eyebrow}</div>}
+          <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>{title}</h2>
+          {subtitle && <p style={{ margin: "0 0 16px", opacity: 0.7, fontSize: 13, lineHeight: 1.5 }}>{subtitle}</p>}
+          <StepDots current={step} total={3} />
+        </div>
+      );
+    }
+
+    // ─── STEP 1: Welcome + Have It All ───────────────────────────────────────────
+    function WelcomeStep({ onNext }) {
+      return (
+        <div style={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+          {/* Hero */}
+          <div style={{ background: `linear-gradient(175deg, ${C.navyDark} 0%, ${C.navy} 60%, #1D3A7A 100%)`, padding: "40px 40px 32px", color: C.white, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: -50, right: -50, width: 220, height: 220, borderRadius: "50%", background: "rgba(212,98,26,0.07)" }} />
+            <div style={{ position: "absolute", bottom: -30, left: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+            <div style={{ position: "relative" }}>
+              <div style={{ fontSize: 11, color: C.orange, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", marginBottom: 18 }}>◆ HOLLAND AMERICA LINE</div>
+              <div style={{ fontSize: 12, opacity: 0.6, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>Welcome Back, Mariner</div>
+              <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 700, lineHeight: 1.2 }}>{guest.name}, your voyage is almost here.</h1>
+              <p style={{ margin: "0 0 24px", opacity: 0.72, fontSize: 14, lineHeight: 1.55 }}>Let's make sure you're ready to make the most of every moment.</p>
+
+              {/* Cruise Summary */}
+              <div style={{ background: "rgba(255,255,255,0.09)", borderRadius: 3, padding: "16px 20px", border: "1px solid rgba(255,255,255,0.14)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, opacity: 0.5, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 5 }}>Your Booking</div>
+                  <div style={{ fontSize: 17, fontWeight: 700 }}>{guest.ship}</div>
+                  <div style={{ fontSize: 13, opacity: 0.78, marginTop: 3 }}>📍 {guest.destination}</div>
+                  <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>⚓ Departs {guest.departurePort} · {guest.sailDate}</div>
+                  <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2 }}>{guest.cabinType} · Booking {guest.bookingRef}</div>
+                </div>
+                <div style={{ textAlign: "center", borderLeft: "1px solid rgba(255,255,255,0.15)", paddingLeft: 20, flexShrink: 0 }}>
+                  <div style={{ fontSize: 36, fontWeight: 700, color: C.orange, lineHeight: 1 }}>{guest.daysUntil}</div>
+                  <div style={{ fontSize: 10, opacity: 0.6, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 4 }}>Days Away</div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                <StepDots current={1} total={3} />
+              </div>
+            </div>
+          </div>
+
+          {/* Have It All section */}
+          <div style={{ padding: "24px 40px 32px", background: C.white }}>
+            {/* HIA Banner */}
+            <div style={{ background: C.navy, borderRadius: 2, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ fontSize: 22 }}>⭐</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.white }}>You're sailing with Have It All</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 1 }}>Your booking includes these great benefits — already taken care of.</div>
+              </div>
+            </div>
+
+            {/* HIA inclusions grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
+              {hiaInclusions.map((item) => (
+                <div key={item.label} style={{ background: C.offWhite, border: `1px solid ${C.border}`, borderRadius: 2, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{item.emoji}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.navy }}>{item.label}</div>
+                    <div style={{ fontSize: 11, color: C.textLight, marginTop: 2 }}>{item.detail}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 13, color: C.textLight, marginBottom: 20, lineHeight: 1.5 }}>
+              Next, we'll show you your itinerary and help you plan shore excursions — your HIA credit can go toward those.
+            </p>
+
+            <OrangeButton onClick={onNext} style={{ width: "100%", padding: "13px" }}>
+              See Your Itinerary →
+            </OrangeButton>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── STEP 2: Itinerary ───────────────────────────────────────────────────────
+    function ItineraryStep({ onNext, onBack }) {
+      return (
+        <div style={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+          <ModalHeader eyebrow="Your Voyage" title="Where You're Headed" subtitle="7 nights through the Eastern Caribbean — here's every stop." step={2} />
+
+          {/* Port list */}
+          <div style={{ background: C.bgPage, padding: "16px 24px", maxHeight: 380, overflowY: "auto" }}>
+            {itinerary.map((stop, idx) => {
+              const isPort = stop.type === "port";
+              const isSea  = stop.type === "sea";
+              return (
+                <div key={stop.day} style={{ display: "flex", gap: 0, marginBottom: idx < itinerary.length - 1 ? 0 : 0 }}>
+                  {/* Timeline */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 48, flexShrink: 0 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: "50%", border: `2px solid ${isPort ? C.orange : C.border}`,
+                      background: isPort ? C.orangeLight : C.white,
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, zIndex: 1
+                    }}>
+                      {stop.emoji}
+                    </div>
+                    {idx < itinerary.length - 1 && (
+                      <div style={{ width: 2, flex: 1, minHeight: 16, background: C.border, margin: "2px 0" }} />
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex: 1, paddingBottom: 14, paddingLeft: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 6 }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 11, color: C.textLight, textTransform: "uppercase", letterSpacing: 1 }}>Day {stop.day} · {stop.date}</span>
+                          {stop.type === "embark" && <span style={{ fontSize: 10, color: C.green, fontWeight: 600, background: C.greenLight, padding: "1px 7px", borderRadius: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>Embark</span>}
+                          {stop.type === "debark" && <span style={{ fontSize: 10, color: C.textLight, fontWeight: 600, background: C.offWhite, border: `1px solid ${C.border}`, padding: "1px 7px", borderRadius: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>Debark</span>}
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: C.textDark, marginTop: 2 }}>{stop.port}</div>
+                        <div style={{ fontSize: 12, color: C.textLight, marginTop: 1 }}>{stop.desc}</div>
+                      </div>
+                      {isPort && stop.excursions > 0 && (
+                        <div style={{ background: C.orange, color: C.white, borderRadius: 2, padding: "4px 10px", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
+                          {stop.excursions} Excursions
+                        </div>
+                      )}
+                      {isSea && (
+                        <div style={{ background: C.offWhite, border: `1px solid ${C.border}`, color: C.textLight, borderRadius: 2, padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0 }}>
+                          At Sea
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* HIA reminder */}
+          <div style={{ padding: "12px 24px", background: C.orangeLight, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 16 }}>🤿</span>
+            <span style={{ fontSize: 13, color: C.textMid }}>
+              <strong style={{ color: C.orange }}>Have It All:</strong> Your $100/person shore excursion credit applies at each port stop.
+            </span>
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding: "16px 24px 24px", background: C.white }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              <GhostButton onClick={onBack} style={{ flex: 1 }}>← Back</GhostButton>
+              <OrangeButton onClick={onNext} style={{ flex: 2 }}>Browse What to Book →</OrangeButton>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── STEP 3: Available Now + Coming Soon ─────────────────────────────────────
+    function PlanningStep({ addedItems, handleAddItem, onFinish, onBack }) {
+      return (
+        <div style={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}>
+          <ModalHeader eyebrow="Your Planner" title="Here's What You Can Book Now" subtitle="We've picked these based on your itinerary and past trips." step={3} />
+
+          <div style={{ background: C.bgPage, padding: "16px 24px", maxHeight: 380, overflowY: "auto" }}>
+            {/* Available Now */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: C.textMid }}>Available Now</div>
+                <div style={{ height: 1, flex: 1, background: C.border }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {availableNow.map((item) => {
+                  const added = addedItems.includes(item.id);
+                  return (
+                    <div key={item.id} style={{ background: C.white, borderRadius: 2, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, border: added ? `1.5px solid ${C.orange}` : `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 24, flexShrink: 0 }}>{item.emoji}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 2 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>{item.title}</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: item.tagColor, background: `${item.tagColor}18`, border: `1px solid ${item.tagColor}30`, padding: "1px 6px", borderRadius: 2, textTransform: "uppercase", letterSpacing: 0.4 }}>{item.tag}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: C.textLight }}>{item.reason}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, marginTop: 2 }}>{item.price} <span style={{ fontWeight: 400, color: C.textLight, fontSize: 12 }}>{item.unit}</span></div>
+                      </div>
+                      <button onClick={() => handleAddItem(item.id)}
+                        style={{ flexShrink: 0, background: added ? C.orange : C.white, color: added ? C.white : C.orange, border: `1.5px solid ${C.orange}`, borderRadius: 2, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                        {added ? "✓ Added" : "Add"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Coming Soon */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: C.textMid }}>Opening Soon</div>
+                <div style={{ height: 1, flex: 1, background: C.border }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {comingSoon.map((item) => (
+                  <div key={item.category} style={{ background: C.white, borderRadius: 2, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, border: `1px solid ${C.border}`, opacity: 0.8 }}>
+                    <div style={{ fontSize: 22, flexShrink: 0 }}>{item.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>{item.category}</div>
+                      <div style={{ fontSize: 11, color: C.textLight }}>{item.description}</div>
+                    </div>
+                    <div style={{ background: C.navy, color: C.white, borderRadius: 2, padding: "4px 10px", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap", letterSpacing: 0.3 }}>In {item.opensIn}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding: "14px 24px 22px", background: C.white, borderTop: `1px solid ${C.border}` }}>
+            {addedItems.length > 0 && (
+              <div style={{ fontSize: 13, color: C.green, fontWeight: 600, marginBottom: 10, textAlign: "center" }}>
+                ✓ {addedItems.length} item{addedItems.length > 1 ? "s" : ""} added to your cart
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <GhostButton onClick={onBack} style={{ flex: 1 }}>← Back</GhostButton>
+              <OrangeButton onClick={onFinish} style={{ flex: 2 }}>Go to My Cruise Dashboard →</OrangeButton>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 12 }}>
+              <span style={{ fontSize: 12, color: C.textLight }}>✉️ We'll email you as new categories open for your sailing</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Unlock Modal — Variant A ────────────────────────────────────────────────
+    function UnlockModal({ onClose }) {
+      return (
+        <div style={{ background: C.white, borderRadius: 3, overflow: "hidden", width: "100%", maxWidth: 460, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+          <div style={{ background: `linear-gradient(160deg, ${C.navyDark}, ${C.navy})`, padding: "28px 32px", color: C.white, textAlign: "center" }}>
+            <div style={{ fontSize: 11, color: C.orange, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>◆ HOLLAND AMERICA LINE</div>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>🍽️</div>
+            <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700 }}>Dining Reservations Are Now Open</h2>
+            <p style={{ margin: 0, opacity: 0.75, fontSize: 13, lineHeight: 1.55 }}>
+              Reserve your table at Pinnacle Grill, Canaletto & more before prime times fill up.
+            </p>
+          </div>
+          <div style={{ padding: "22px 32px 28px" }}>
+            <div style={{ background: C.orangeLight, border: `1px solid ${C.orange}35`, borderRadius: 2, padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 20 }}>
+              <div style={{ fontSize: 16 }}>⭐</div>
+              <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.5 }}>
+                Your <strong>Have It All</strong> package includes 1 specialty dinner per guest per day — make your reservations now to get the times you want.
+              </div>
+            </div>
+            <OrangeButton onClick={onClose} style={{ width: "100%", marginBottom: 10, padding: "13px 24px", fontSize: 15 }}>Reserve Dining Now →</OrangeButton>
+            <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: C.textLight, fontSize: 13, cursor: "pointer", padding: "6px" }}>Maybe later</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Dashboard ───────────────────────────────────────────────────────────────
+    function Dashboard({ addedItems, handleAddItem, abVariant, setAbVariant, showUnlockModal, setShowUnlockModal }) {
+      const [activeTab, setActiveTab] = useState("My Cruise");
+      const bookedCount = addedItems.length;
+
+      return (
+        <div style={{ minHeight: "100vh", background: C.bgPage }}>
+          {/* Top Nav */}
+          <div style={{ background: C.navyDark, color: C.white }}>
+            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 32px", height: 54, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 11, color: C.orange, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>◆ HOLLAND AMERICA LINE</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                <span style={{ fontSize: 13, opacity: 0.7 }}>Welcome, {guest.name}</span>
+                <div style={{ background: C.orange, color: C.white, borderRadius: 2, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}>🛒 {bookedCount} in cart</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Variant B Banner */}
+          {abVariant === "B" && (
+            <div style={{ background: C.navy, color: C.white, padding: "12px 32px", display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 18 }}>🍽️</span>
+              <div>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Specialty Dining is now open for your voyage.</span>
+                <span style={{ fontSize: 13, opacity: 0.8, marginLeft: 8 }}>Your Have It All package includes 1 dinner per guest per day — reserve now.</span>
+              </div>
+              <button style={{ background: C.orange, color: C.white, border: "none", borderRadius: 2, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>Reserve Dining →</button>
+              <button onClick={() => setAbVariant("none")} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer" }}>✕</button>
+            </div>
+          )}
+
+          {/* Sub Nav */}
+          <div style={{ background: C.navy, borderBottom: `3px solid ${C.navyDark}` }}>
+            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 32px", display: "flex", overflowX: "auto" }}>
+              {navTabs.map((tab) => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  style={{ background: "none", border: "none", borderBottom: activeTab === tab ? `3px solid ${C.orange}` : "3px solid transparent", color: activeTab === tab ? C.white : "rgba(255,255,255,0.58)", padding: "14px 18px", fontSize: 13, fontWeight: activeTab === tab ? 600 : 400, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s", marginBottom: -3, letterSpacing: 0.2 }}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main Layout */}
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 32px", display: "grid", gridTemplateColumns: "280px 1fr", gap: 24, alignItems: "start" }}>
+
+            {/* Left Sidebar */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Voyage Card */}
+              <div style={{ background: C.white, borderRadius: 2, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ background: C.navy, color: C.white, padding: "14px 18px" }}>
+                  <div style={{ fontSize: 10, opacity: 0.55, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 3 }}>Upcoming Voyage</div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>{guest.ship}</div>
+                </div>
+                <div style={{ padding: "16px 18px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: C.textLight, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Sail Date</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>{guest.sailDate}</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: C.orange }}>{guest.daysUntil}</div>
+                      <div style={{ fontSize: 10, color: C.textLight, textTransform: "uppercase", letterSpacing: 1 }}>days away</div>
+                    </div>
+                  </div>
+                  {[["Destination", guest.destination], ["Departs From", guest.departurePort], ["Cabin", guest.cabinType], ["Booking #", guest.bookingRef]].map(([lbl, val]) => (
+                    <div key={lbl} style={{ marginBottom: 9 }}>
+                      <div style={{ fontSize: 10, color: C.textLight, textTransform: "uppercase", letterSpacing: 1, marginBottom: 1 }}>{lbl}</div>
+                      <div style={{ fontSize: 13, color: C.textDark, fontWeight: 500 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Have It All Summary */}
+              <div style={{ background: C.white, borderRadius: 2, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ background: C.navy, color: C.white, padding: "11px 16px", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14 }}>⭐</span>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Have It All Package</span>
+                </div>
+                <div style={{ padding: "12px 16px" }}>
+                  {hiaInclusions.map((item) => (
+                    <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{item.emoji}</span>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.textDark }}>{item.label}</div>
+                        <div style={{ fontSize: 11, color: C.textLight }}>{item.detail}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Planning Progress */}
+              <div style={{ background: C.white, borderRadius: 2, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ padding: "11px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: C.textMid }}>Planning Progress</div>
+                <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[{ label: "Items in Cart", value: bookedCount, color: C.orange }, { label: "Available to Book", value: availableNow.length, color: C.navy }, { label: "Opening Soon", value: comingSoon.length, color: C.gold }].map(({ label, value, color }) => (
+                    <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 13, color: C.textMid }}>{label}</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Content */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* Itinerary Preview */}
+              <div style={{ background: C.white, borderRadius: 2, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.textDark }}>Your Itinerary</div>
+                  <span style={{ fontSize: 13, color: C.orange, fontWeight: 600, cursor: "pointer" }}>View Full Itinerary →</span>
+                </div>
+                <div style={{ padding: "12px 20px", display: "flex", gap: 0, overflowX: "auto" }}>
+                  {itinerary.map((stop, idx) => (
+                    <div key={stop.day} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+                      <div style={{ textAlign: "center", width: 90 }}>
+                        <div style={{ fontSize: 20, marginBottom: 4 }}>{stop.emoji}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: stop.type === "port" ? C.navy : C.textLight, lineHeight: 1.2 }}>{stop.port.split(",")[0]}</div>
+                        <div style={{ fontSize: 10, color: C.textLight, marginTop: 2 }}>Day {stop.day}</div>
+                        {stop.excursions > 0 && <div style={{ fontSize: 10, color: C.orange, fontWeight: 600, marginTop: 3 }}>{stop.excursions} excursions</div>}
+                      </div>
+                      {idx < itinerary.length - 1 && (
+                        <div style={{ width: 20, height: 1, background: C.border, flexShrink: 0 }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Now */}
+              <div style={{ background: C.white, borderRadius: 2, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.textDark }}>Available to Book Now</div>
+                  <div style={{ fontSize: 11, color: C.green, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>● Open</div>
+                </div>
+                <div style={{ padding: "8px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {availableNow.map((item) => {
+                    const added = addedItems.includes(item.id);
+                    return (
+                      <div key={item.id} style={{ padding: "12px", borderRadius: 2, display: "flex", alignItems: "center", gap: 14, border: added ? `1.5px solid ${C.orange}` : `1px solid ${C.border}`, background: added ? C.orangeLight : C.offWhite }}>
+                        <div style={{ fontSize: 22 }}>{item.emoji}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{item.title}</span>
+                            <span style={{ fontSize: 10, color: item.tagColor, background: `${item.tagColor}18`, border: `1px solid ${item.tagColor}30`, padding: "1px 6px", borderRadius: 2, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 600 }}>{item.tag}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: C.textLight, marginTop: 2 }}>{item.reason}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, marginTop: 2 }}>{item.price} <span style={{ fontWeight: 400, color: C.textLight, fontSize: 12 }}>{item.unit}</span></div>
+                        </div>
+                        <button onClick={() => handleAddItem(item.id)}
+                          style={{ background: added ? C.orange : C.white, color: added ? C.white : C.orange, border: `1.5px solid ${C.orange}`, borderRadius: 2, padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                          {added ? "✓ Added" : "Add"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Opening Soon */}
+              <div style={{ background: C.white, borderRadius: 2, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.textDark }}>Opening Soon</div>
+                  <div style={{ fontSize: 11, color: C.gold, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>● Coming Soon</div>
+                </div>
+                <div style={{ padding: "8px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {comingSoon.map((item) => (
+                    <div key={item.category} style={{ padding: "12px", borderRadius: 2, display: "flex", alignItems: "center", gap: 14, border: `1px solid ${C.border}`, background: C.offWhite }}>
+                      <div style={{ fontSize: 22 }}>{item.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.textDark }}>{item.category}</div>
+                        <div style={{ fontSize: 12, color: C.textLight }}>{item.description}</div>
+                      </div>
+                      <div style={{ background: C.navy, color: C.white, borderRadius: 2, padding: "4px 10px", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap" }}>In {item.opensIn}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "12px 20px", background: C.orangeLight, borderTop: `1px solid ${C.border}`, fontSize: 13, color: C.textMid }}>
+                  ✉️ <strong style={{ color: C.orange }}>We'll notify you</strong> by email when each category opens for your sailing.
+                </div>
+              </div>
+
+              {/* A/B Test Controls */}
+              <div style={{ background: C.white, borderRadius: 2, border: `2px dashed ${C.border}`, padding: "18px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: C.textLight, marginBottom: 10 }}>🧪 Prototype Demo — A/B Test Controls</div>
+                <div style={{ fontSize: 13, color: C.textMid, marginBottom: 14 }}>When Specialty Dining opens, which notification drives more engagement?</div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button onClick={() => { setAbVariant("A"); setShowUnlockModal(true); }}
+                    style={{ background: abVariant === "A" ? C.navy : C.white, color: abVariant === "A" ? C.white : C.navy, border: `1.5px solid ${C.navy}`, borderRadius: 2, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Variant A: Pop-up Modal
+                  </button>
+                  <button onClick={() => { setAbVariant("B"); setShowUnlockModal(false); }}
+                    style={{ background: abVariant === "B" ? C.navy : C.white, color: abVariant === "B" ? C.white : C.navy, border: `1.5px solid ${C.navy}`, borderRadius: 2, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Variant B: Banner
+                  </button>
+                  {(abVariant === "A" || abVariant === "B") && (
+                    <button onClick={() => { setAbVariant("none"); setShowUnlockModal(false); }}
+                      style={{ background: C.white, color: C.textLight, border: `1.5px solid ${C.border}`, borderRadius: 2, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Root App ────────────────────────────────────────────────────────────────
+    function App() {
+      const [screen, setScreen] = useState("modal");
+      const [modalStep, setModalStep] = useState(1);
+      const [abVariant, setAbVariant] = useState("none");
+      const [showUnlockModal, setShowUnlockModal] = useState(false);
+      const [addedItems, setAddedItems] = useState([]);
+
+      const handleAddItem = (id) =>
+        setAddedItems((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+
+      return (
+        <div style={{ fontFamily: "'Source Sans 3', 'Segoe UI', sans-serif", minHeight: "100vh" }}>
+          <Dashboard addedItems={addedItems} handleAddItem={handleAddItem} abVariant={abVariant} setAbVariant={setAbVariant} showUnlockModal={showUnlockModal} setShowUnlockModal={setShowUnlockModal} />
+
+          {screen === "modal" && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(10,18,40,0.8)", backdropFilter: "blur(4px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
+              <div style={{ width: "100%", maxWidth: 560, margin: "auto" }}>
+                {modalStep === 1 && <WelcomeStep onNext={() => setModalStep(2)} />}
+                {modalStep === 2 && <ItineraryStep onNext={() => setModalStep(3)} onBack={() => setModalStep(1)} />}
+                {modalStep === 3 && <PlanningStep addedItems={addedItems} handleAddItem={handleAddItem} onFinish={() => setScreen("dashboard")} onBack={() => setModalStep(2)} />}
+              </div>
+            </div>
+          )}
+
+          {screen === "dashboard" && abVariant === "A" && showUnlockModal && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(10,18,40,0.72)", backdropFilter: "blur(3px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+              <div style={{ width: "100%", maxWidth: 460 }}>
+                <UnlockModal onClose={() => setShowUnlockModal(false)} />
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
